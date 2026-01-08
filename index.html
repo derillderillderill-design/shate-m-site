@@ -12,6 +12,7 @@
         .product-card { background: white; border-left: 5px solid #e31e24; padding: 20px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .price { font-size: 20px; color: #27ae60; font-weight: bold; }
         .brand { font-weight: bold; font-size: 14px; color: #777; }
+        .status { font-size: 0.8em; color: #888; }
         #loader { display: none; text-align: center; color: #666; }
     </style>
 </head>
@@ -37,17 +38,18 @@ async function fetchPrice() {
     if (!artId) { alert("Введите ID артикула"); return; }
 
     const TOKEN = '941e9d04-49ab-4fa4-9226-63091e6b5fe5'; // Ваш токен
-    const AGREEMENT = 'S37322'; // Ваш код договора из cURL
+    const AGREEMENT = 'S37322'; // Ваш код договора
 
     loader.style.display = 'block';
     resultsDiv.innerHTML = '';
 
     try {
+        // ИСПРАВЛЕННЫЙ URL И ЗАГОЛОВОК:
         const response = await fetch(`api.shate-m.by{AGREEMENT}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${TOKEN}`, // <-- Правильный заголовок для токена
+                'Authorization': `Bearer ${TOKEN}`, // <-- Правильный заголовок с Bearer
                 'accept': 'application/json'
             },
             body: JSON.stringify([
@@ -58,12 +60,13 @@ async function fetchPrice() {
             ])
         });
 
-        if (!response.ok) throw new Error('Ошибка сервера или неверный токен');
+        if (!response.ok) throw new Error('Ошибка сервера: ' + response.status);
 
         const data = await response.json();
         renderResults(data);
     } catch (error) {
-        resultsDiv.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${error.message}. <br> Проверьте CORS или токен.</div>`;
+        resultsDiv.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${error.message}. Убедитесь, что файл открыт по адресу https://..., а не с рабочего стола.</div>`;
+        console.error('Error:', error);
     } finally {
         loader.style.display = 'none';
     }
@@ -71,12 +74,10 @@ async function fetchPrice() {
 
 function renderResults(data) {
     const container = document.getElementById('results');
-    
-    // Если API возвращает массив предложений
     const items = Array.isArray(data) ? data : (data.items || []);
 
     if (items.length === 0) {
-        container.innerHTML = '<p style="text-align:center;">Ничего не найдено</p>';
+        container.innerHTML = '<p style="text-align:center;">Товары не найдены</p>';
         return;
     }
 
@@ -84,8 +85,8 @@ function renderResults(data) {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <div class="brand">${item.brandName || 'Бренд ID: ' + item.brandId}</div>
-            <div style="font-size: 18px; margin: 5px 0;">${item.articleCode || 'Товар'}</div>
+            <div class="brand">${item.brandName || 'Артикул: ' + item.articleCode}</div>
+            <div style="font-size: 18px; margin: 5px 0;">${item.name || 'Наименование товара'}</div>
             <div class="price">${item.price || 'Цена по запросу'} BYN</div>
             <div style="margin-top:10px; font-size:13px;">Склад: ${item.warehouseName || 'Основной'} | Остаток: <b>${item.quantity || 0} шт.</b></div>
         `;
@@ -95,5 +96,4 @@ function renderResults(data) {
 </script>
 
 </body>
-
 </html>
