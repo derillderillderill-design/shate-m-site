@@ -47,7 +47,7 @@ async function fetchPrice() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-API-KEY': TOKEN, // Передаем токен как API ключ
+                'Authorization': `Bearer ${TOKEN}`, // <-- Правильный заголовок
                 'accept': 'application/json'
             },
             body: JSON.stringify([
@@ -97,6 +97,7 @@ function renderResults(data) {
 </body>
 
 </html>
+
 
 
 
