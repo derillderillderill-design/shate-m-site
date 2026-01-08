@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказ запчастей — ШАТЕ-М</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 30px; }
+        .search-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto 30px; }
+        input { width: 70%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; outline: none; }
+        button { width: 25%; padding: 12px; background-color: #e31e24; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #b3161a; }
+        .product-card { background: white; border-left: 5px solid #e31e24; padding: 20px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .price { font-size: 20px; color: #27ae60; font-weight: bold; }
+        .brand { font-weight: bold; font-size: 14px; color: #777; }
+        #loader { display: none; text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <h2 style="text-align: center; color: #333;">Масла и Фильтры</h2>
+    <div style="display: flex; justify-content: space-between;">
+        <input type="number" id="articleId" placeholder="ID товара (напр. 1248288)">
+        <button onclick="fetchPrice()">Найти</button>
+    </div>
+</div>
+
+<div id="loader">Загрузка данных из ШАТЕ-М...</div>
+<div id="results" style="max-width: 800px; margin: 0 auto;"></div>
+
+<script>
+async function fetchPrice() {
+    const artId = document.getElementById('articleId').value;
+    const resultsDiv = document.getElementById('results');
+    const loader = document.getElementById('loader');
+
+    if (!artId) { alert("Введите ID артикула"); return; }
+
+    const TOKEN = '941e9d04-49ab-4fa4-9226-63091e6b5fe5'; // Ваш токен
+    const AGREEMENT = 'OC90'; // Ваш код договора из cURL
+
+    loader.style.display = 'block';
+    resultsDiv.innerHTML = '';
+
+    try {
+        const response = await fetch(`api.shate-m.by{AGREEMENT}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': TOKEN, // Передаем токен как API ключ
+                'accept': 'application/json'
+            },
+            body: JSON.stringify([
+                {
+                    "articleId": parseInt(artId),
+                    "includeAnalogs": true
+                }
+            ])
+        });
+
+        if (!response.ok) throw new Error('Ошибка сервера или неверный токен');
+
+        const data = await response.json();
+        renderResults(data);
+    } catch (error) {
+        resultsDiv.innerHTML = `<div style="color:red; text-align:center;">Ошибка: ${error.message}. <br> Проверьте CORS или токен.</div>`;
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function renderResults(data) {
+    const container = document.getElementById('results');
+    
+    // Если API возвращает массив предложений
+    const items = Array.isArray(data) ? data : (data.items || []);
+
+    if (items.length === 0) {
+        container.innerHTML = '<p style="text-align:center;">Ничего не найдено</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="brand">${item.brandName || 'Бренд ID: ' + item.brandId}</div>
+            <div style="font-size: 18px; margin: 5px 0;">${item.articleCode || 'Товар'}</div>
+            <div class="price">${item.price || 'Цена по запросу'} BYN</div>
+            <div style="margin-top:10px; font-size:13px;">Склад: ${item.warehouseName || 'Основной'} | Остаток: <b>${item.quantity || 0} шт.</b></div>
+        `;
+        container.appendChild(card);
+    });
+}
+</script>
+
+</body>
+</html>
