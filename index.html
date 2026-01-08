@@ -37,7 +37,7 @@ async function fetchPrice() {
     if (!artId) { alert("Введите ID артикула"); return; }
 
     const TOKEN = '941e9d04-49ab-4fa4-9226-63091e6b5fe5'; // Ваш токен
-    const AGREEMENT = '/S37322'; // Ваш код договора из cURL
+    const AGREEMENT = 'S37322'; // Ваш код договора из cURL
 
     loader.style.display = 'block';
     resultsDiv.innerHTML = '';
@@ -97,6 +97,7 @@ function renderResults(data) {
 </body>
 
 </html>
+
 
 
 
